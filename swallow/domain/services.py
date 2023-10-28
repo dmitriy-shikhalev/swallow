@@ -19,9 +19,9 @@ def execute(message: Message) -> Tuple[Channel, Message]:
     try:
         result = message.ticket.units[0].operator(
             message.object
-        )()
+        )
     except Exception as error:
-        operator_name = message.ticket.units[0].operator.__name__
+        operator_name = message.ticket.units[0].operator.__class__.__name__
         logger.error('Error %s occur in operator %s', error, operator_name)
         error_message = Message(
             object=Object(
@@ -46,6 +46,13 @@ def execute(message: Message) -> Tuple[Channel, Message]:
 
     # Send to a simple channel
     return (
-        Channel(message.ticket.units[1].operator.__name__),
+        Channel(message.ticket.units[1].operator.__class__.__name__),
         new_message
     )
+
+
+def get_message_from_dict(dict_: dict) -> Message:
+    """
+    Parse dict_ and return a Message.
+    """
+    raise NotImplementedError

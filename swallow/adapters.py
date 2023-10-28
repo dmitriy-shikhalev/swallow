@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import pika
 
 from swallow.domain.models import Channel, Message
+from swallow.domain.services import get_message_from_dict
 
 
 class AbstractAMQPConnector(ABC):
@@ -64,8 +65,8 @@ class RabbitMQConnector(AbstractAMQPConnector):
             return None
 
         if data is None:
-            raise ValueError('Message is empty!')
+            raise ValueError('Message is incorrect!')
 
         data_json = json.loads(data)
-        message = Message.from_dict(data_json)
+        message = get_message_from_dict(data_json)
         return message

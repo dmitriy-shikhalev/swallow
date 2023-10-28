@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from hashlib import sha256
 from typing import Any, NewType, Sequence
 
 
@@ -17,13 +16,6 @@ class Object:
     args: Sequence[Any] = field(default_factory=list)
     kwargs: dict[str, Any] = field(default_factory=dict)
 
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Args.
-        """
-        raise NotImplementedError
-
 
 class AbstractOperator(ABC):
     """
@@ -32,11 +24,11 @@ class AbstractOperator(ABC):
     # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @abstractmethod
-    def __call__(self, args: Object) -> Object:
+    def __call__(self, object: Object) -> Object:  # pylint: disable=redefined-builtin
         raise NotImplementedError  # pragma: no cover
 
 
@@ -59,14 +51,7 @@ class Unit:
     Object-value for "unit".
     """
     channel: Channel
-    operator: type[AbstractOperator]
-
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Unit.
-        """
-        raise NotImplementedError
+    operator: AbstractOperator
 
 
 @dataclass(frozen=True)
@@ -82,16 +67,6 @@ class Ticket:
     is_last: bool = True
     count: int | None = None
 
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Ticket.
-        """
-        raise NotImplementedError
-
-    def __hash__(self):
-        return hash(self.ticket_id) ^ hash(self.num) ^ hash(self.is_last)
-
 
 @dataclass(frozen=True)
 class Message:
@@ -100,13 +75,3 @@ class Message:
     """
     object: Object
     ticket: Ticket
-
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Message.
-        """
-        return cls(
-            object=Object.from_dict(dict_['args']),
-            ticket=Ticket.from_dict(dict_['ticket']),
-        )
