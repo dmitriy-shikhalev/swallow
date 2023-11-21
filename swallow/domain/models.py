@@ -1,11 +1,24 @@
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, NewType, Sequence
 
 
 logger = logging.getLogger(__name__)
+
+
+JobID = NewType('JobID', str)
+OperatorName = NewType('OperatorName', str)
+RequestID = NewType('RequestID', str)
+TicketID = NewType('TicketID', str)
+
+
+class Condition(Enum):
+    """
+    Condition of starting of operator by count of enter messages.
+    """
+    ONE = 'ONE'
+    ALL = 'ALL'
 
 
 @dataclass(frozen=True)
@@ -17,32 +30,16 @@ class Object:
     kwargs: dict[str, Any] = field(default_factory=dict)
 
 
-class AbstractOperator(ABC):
+@dataclass(frozen=True)
+class Request:
     """
-    Abstract class for operators.
+    Class for request.
     """
-    # pylint: disable=too-few-public-methods
-
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    @abstractmethod
-    def __call__(self, object: Object) -> Object:  # pylint: disable=redefined-builtin
-        raise NotImplementedError  # pragma: no cover
-
-
-Channel = NewType('Channel', str)
-TicketID = NewType('TicketID', str)
-
-
-class ChannelEnum(Enum):
-    """
-    Preset communication channels for enter, exit and error.
-    """
-    ENTER = Channel('enter')
-    EXIT = Channel('exit')
-    ERROR = Channel('error')
+    id: RequestID  # pylint: disable=invalid-name
+    operator_name: OperatorName
+    input: Object
+    output: Object
+    exit_code: int | None = None
 
 
 @dataclass(frozen=True)
@@ -50,8 +47,8 @@ class Unit:
     """
     Object-value for "unit".
     """
-    channel: Channel
-    operator: AbstractOperator
+    operator_name: OperatorName
+    condition: Condition
 
 
 @dataclass(frozen=True)
@@ -59,13 +56,9 @@ class Ticket:
     """
     Object-value for "ticket".
     """
-    ticket_id: TicketID
-    units: Sequence[Unit]
-
-    # Block for splitter-aggregator
-    num: int = 0
-    is_last: bool = True
-    count: int | None = None
+    units: Sequence[
+        Unit | Sequence[Unit]
+    ]
 
 
 @dataclass(frozen=True)
@@ -73,5 +66,21 @@ class Message:
     """
     Object-value for "message".
     """
+    id: JobID  # pylint: disable=invalid-name
     object: Object
     ticket: Ticket
+
+    # Block for splitter-aggregator
+    num: int
+    is_last: bool
+
+
+@dataclass(frozen=True)
+class Job:
+    """
+    Class for Job.
+    """
+    id: JobID  # pylint: disable=invalid-name
+    ticket: Ticket
+    inputs: Object
+    outputs: Object | None
