@@ -1,12 +1,24 @@
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from hashlib import sha256
 from typing import Any, NewType, Sequence
 
 
 logger = logging.getLogger(__name__)
+
+
+JobID = NewType('JobID', str)
+OperatorName = NewType('OperatorName', str)
+RequestID = NewType('RequestID', str)
+TicketID = NewType('TicketID', str)
+
+
+class Condition(Enum):
+    """
+    Condition of starting of operator by count of enter messages.
+    """
+    ONE = 'ONE'
+    ALL = 'ALL'
 
 
 @dataclass(frozen=True)
@@ -17,40 +29,17 @@ class Object:
     args: Sequence[Any] = field(default_factory=list)
     kwargs: dict[str, Any] = field(default_factory=dict)
 
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Args.
-        """
-        raise NotImplementedError
 
-
-class AbstractOperator(ABC):
+@dataclass(frozen=True)
+class Request:
     """
-    Abstract class for operators.
+    Class for request.
     """
-    # pylint: disable=too-few-public-methods
-
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    @abstractmethod
-    def __call__(self, args: Object) -> Object:
-        raise NotImplementedError  # pragma: no cover
-
-
-Channel = NewType('Channel', str)
-TicketID = NewType('TicketID', str)
-
-
-class ChannelEnum(Enum):
-    """
-    Preset communication channels for enter, exit and error.
-    """
-    ENTER = Channel('enter')
-    EXIT = Channel('exit')
-    ERROR = Channel('error')
+    id: RequestID  # pylint: disable=invalid-name
+    operator_name: OperatorName
+    input: Object
+    output: Object
+    exit_code: int | None = None
 
 
 @dataclass(frozen=True)
@@ -58,15 +47,8 @@ class Unit:
     """
     Object-value for "unit".
     """
-    channel: Channel
-    operator: type[AbstractOperator]
-
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Unit.
-        """
-        raise NotImplementedError
+    operator_name: OperatorName
+    condition: Condition
 
 
 @dataclass(frozen=True)
@@ -74,23 +56,9 @@ class Ticket:
     """
     Object-value for "ticket".
     """
-    ticket_id: TicketID
-    units: Sequence[Unit]
-
-    # Block for splitter-aggregator
-    num: int = 0
-    is_last: bool = True
-    count: int | None = None
-
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Ticket.
-        """
-        raise NotImplementedError
-
-    def __hash__(self):
-        return hash(self.ticket_id) ^ hash(self.num) ^ hash(self.is_last)
+    units: Sequence[
+        Unit | Sequence[Unit]
+    ]
 
 
 @dataclass(frozen=True)
@@ -98,15 +66,21 @@ class Message:
     """
     Object-value for "message".
     """
+    id: JobID  # pylint: disable=invalid-name
     object: Object
     ticket: Ticket
 
-    @classmethod
-    def from_dict(cls, dict_: dict):
-        """
-        Convert python-dict to class Message.
-        """
-        return cls(
-            object=Object.from_dict(dict_['args']),
-            ticket=Ticket.from_dict(dict_['ticket']),
-        )
+    # Block for splitter-aggregator
+    num: int
+    is_last: bool
+
+
+@dataclass(frozen=True)
+class Job:
+    """
+    Class for Job.
+    """
+    id: JobID  # pylint: disable=invalid-name
+    ticket: Ticket
+    inputs: Object
+    outputs: Object | None
