@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
-from swallow.domain.models import Object, OperatorName, RequestID
+from .models import Object, OperatorName, RequestID
 
 
 class AbstractExecutor(ABC):
+    # pylint: disable=too-few-public-methods
     """
     Abstract class for operators.
     """

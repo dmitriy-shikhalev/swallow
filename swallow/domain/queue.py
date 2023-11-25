@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .domain.models import Message
+from .models import Message
 
 
 class AbstractQueue(ABC):
@@ -20,22 +20,3 @@ class AbstractQueue(ABC):
         Abstract method "push".
         """
         raise NotImplementedError
-
-
-class InMemoryQueue(AbstractQueue):
-    """
-    Local queue.
-    """
-    storage: list[Message]
-
-    def __init__(self):
-        self.storage = []
-
-    def push(self, message: Message):
-        self.storage.append(message)
-
-    def pull(self) -> Message | None:
-        try:
-            return self.storage.pop()
-        except IndexError:
-            return None

@@ -13,6 +13,16 @@ RequestID = NewType('RequestID', str)
 TicketID = NewType('TicketID', str)
 
 
+class JobStatus(Enum):
+    """
+    All available statuses of Job.
+    """
+    PENDING = 'PENDING'
+    PROCESSING = 'PROCESSING'
+    DONE = 'DONE'
+    ERROR = 'ERROR'
+
+
 class Condition(Enum):
     """
     Condition of starting of operator by count of enter messages.
@@ -84,3 +94,4 @@ class Job:
     ticket: Ticket
     inputs: Object
     outputs: Object | None
+    status: JobStatus = JobStatus.PENDING
