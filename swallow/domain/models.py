@@ -76,13 +76,13 @@ class Message:
     """
     Object-value for "message".
     """
-    id: JobID  # pylint: disable=invalid-name
+    id: JobID | None  # pylint: disable=invalid-name
     object: Object
     ticket: Ticket
 
     # Block for splitter-aggregator
-    num: int
-    is_last: bool
+    num: int | None
+    is_last: bool | None
 
 
 @dataclass(frozen=True)

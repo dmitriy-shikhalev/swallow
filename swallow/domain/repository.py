@@ -16,21 +16,21 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, pk: JobID) -> Job:  # pylint: disable=invalid-name
+    def get(self, id: JobID) -> Job:  # pylint: disable=invalid-name, redefined-builtin
         """
         Get existed record.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def update(self, pk: JobID, job: Job):  # pylint: disable=invalid-name
+    def update(self, id: JobID, job: Job):  # pylint: disable=invalid-name, redefined-builtin
         """
         Update existed record.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, pk: JobID):  # pylint: disable=invalid-name
+    def delete(self, id: JobID):  # pylint: disable=invalid-name, redefined-builtin
         """
         Delete existed record.
         """

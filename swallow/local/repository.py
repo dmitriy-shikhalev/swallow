@@ -10,24 +10,27 @@ class SqliteRepository(AbstractRepository):
     """
     Class SQLite repository.
     """
+    initialized = False
+
     def __init__(self, name: str):
         self.name = name
         self.connection = sqlite3.connect(name)  # pylint: disable=invalid-name
 
-        self.init_db()
-
     def init_db(self):
+        """
+        Init DB.
+        """
         cursor = self.connection.cursor()
         try:
             cursor.execute("""
-                        CREATE TABLE jobs(
-                           id TEXT primary key,
-                           ticket TEXT,
-                           inputs TEXT,
-                           outputs TEXT,
-                           status TEXT
-                        )
-                    """)
+                CREATE TABLE jobs(
+                   id TEXT primary key,
+                   ticket TEXT,
+                   inputs TEXT,
+                   outputs TEXT,
+                   status TEXT
+                )
+            """)
         finally:
             cursor.close()
 
@@ -41,11 +44,11 @@ class SqliteRepository(AbstractRepository):
         finally:
             cursor.close()
 
-    def get(self, pk: Any) -> Job:
+    def get(self, id: Any) -> Job:  # pylint: disable=redefined-builtin
         raise NotImplementedError
 
-    def update(self, pk: Any, job: Job):
+    def update(self, id: Any, job: Job):  # pylint: disable=redefined-builtin
         raise NotImplementedError
 
-    def delete(self, pk: JobID):
+    def delete(self, id: JobID):  # pylint: disable=redefined-builtin
         raise NotImplementedError

@@ -27,4 +27,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-yarrow = "yarrow.main:serve"
+yarrow = "yarrow.main:main"
