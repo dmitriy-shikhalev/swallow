@@ -36,7 +36,7 @@ class SqliteRepository(AbstractRepository):
         try:
             cursor.execute("""
                 INSERT INTO jobs (id, ticket, inputs, outputs, status)
-                VALUES (:id, :ticket, :inputs, :outputs, :status)
+                    VALUES (:id, :ticket, :inputs, :outputs, :status)
             """, asdict(job))
         finally:
             cursor.close()
