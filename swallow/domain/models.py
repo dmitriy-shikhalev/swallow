@@ -76,7 +76,7 @@ class Message:
     """
     Object-value for "message".
     """
-    id: JobID | None  # pylint: disable=invalid-name
+    id: JobID  # pylint: disable=invalid-name
     object: Object
     ticket: Ticket
 

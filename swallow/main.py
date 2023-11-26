@@ -2,12 +2,14 @@ import atexit
 import time
 from argparse import ArgumentParser, Namespace
 
-from .exceptions import UnknownExecutor, UnknownQueue, UnknownRepository
+from .domain.exceptions import UnknownExecutor, UnknownQueue, UnknownMonitor, UnknownRepository
 from .domain.executor import AbstractExecutor
 from .domain.queue import AbstractQueue
+from .domain.monitor import AbstractMonitor
 from .domain.repository import AbstractRepository
 from .local.executor import LocalExecutor
 from .local.queue import InMemoryQueue
+from .local.monitor import LocalFolderMonitor
 from .local.repository import SqliteRepository
 
 
@@ -20,14 +22,16 @@ def get_settings() -> Namespace:
     """
     parser = ArgumentParser()
     parser.add_argument("name")
+    parser.add_argument("folder")
     parser.add_argument("--executor", dest='executor', required=True)
     parser.add_argument("--queue", dest='queue', required=True)
     parser.add_argument("--repository", dest='repository', required=True)
+    parser.add_argument("--monitor", dest='monitor', required=True)
 
     return parser.parse_args()
 
 
-def bootstrap() -> tuple[AbstractRepository, AbstractQueue, AbstractExecutor]:
+def bootstrap() -> tuple[AbstractRepository, AbstractQueue, AbstractExecutor, AbstractMonitor]:
     """
     Startup initialization function.
     """
@@ -48,25 +52,38 @@ def bootstrap() -> tuple[AbstractRepository, AbstractQueue, AbstractExecutor]:
     else:
         raise UnknownExecutor(settings.executor)
 
-    return repository, queue, executor
+    if settings.monitor == 'LocalFolderMonitor':
+        monitor = LocalFolderMonitor(settings.folder)
+    else:
+        raise UnknownMonitor(settings.monitor)
+
+    return repository, queue, executor, monitor
 
 
 def shutdown():
     """
     Final everything at the end of process.
     """
-    pass
 
 
-def serve(repository: AbstractRepository, queue: AbstractQueue, executor: AbstractExecutor):
+def serve(repository: AbstractRepository, queue: AbstractQueue, executor: AbstractExecutor, monitor: AbstractMonitor):
     """
     Infinite loop.
     """
     while True:
+        any_load = False
+
+        new_file = monitor.get()
+        if new_file is not None:
+            any_load = True
+            raise NotImplementedError
+
         message = queue.pull()
         if message is not None:
-            if message.id is not None:
-        else:
+            any_load = True
+            raise NotImplementedError
+
+        if not any_load:
             time.sleep(SLEEP_TIME)
 
 
@@ -74,7 +91,7 @@ def main():
     """
     Main process.
     """
-    repository, queue, executor = bootstrap()
+    repository, queue, executor, monitor = bootstrap()
     atexit.register(shutdown)
 
-    serve(repository, queue, executor)
+    serve(repository, queue, executor, monitor)
