@@ -1,35 +1,31 @@
 import logging
-from dataclasses import replace
+from dataclasses import replace  # pylint: disable=unused-import
+from random import shuffle
+from typing import Generator
 
-from .models import Job, JobStatus, Message
-from .executor import AbstractExecutor
+from .models import Message
 from .queue import AbstractQueue
-from .repository import AbstractRepository
 
 
 logger = logging.getLogger(__name__)
 
 
-def execute(message: Message, executor: AbstractExecutor):
+def execute(message: Message):
     """
     Execute the message by executor.
     """
     raise NotImplementedError
 
 
-def start_job(job: Job, repository: AbstractRepository, queue: AbstractQueue):
+def generator(*queues: AbstractQueue) -> Generator[Message, None, None]:
+    """"
+    Function for lister several queues.
     """
-    Start the job.
-    """
-    queue.push(
-        Message(
-            id=job.id,
-            object=job.inputs,
-            ticket=job.ticket,
-            num=0,
-            is_last=True,
-        )
-    )
+    mutable_list_queues = list(queues)
+    shuffle(mutable_list_queues)
+    while True:
+        for queue in mutable_list_queues:
+            message = queue.pop()
 
-    new_job = replace(job, status=JobStatus.PROCESSING)
-    repository.update(job.id, new_job)
+            if message:
+                yield message

@@ -1,37 +1,36 @@
 from abc import ABC, abstractmethod
 
-from .models import Job, JobID
+from .models import AggregateKey, Message
 
 
 class AbstractRepository(ABC):
     """
-    Abstract class for repository.
+    Abstract repository.
     """
-
     @abstractmethod
-    def create(self, job: Job) -> JobID:
+    def create(self, key: AggregateKey):
         """
-        Create new record.
+        Create a new aggregate by key.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, id: JobID) -> Job:  # pylint: disable=invalid-name, redefined-builtin
+    def get(self, key: AggregateKey):
         """
-        Get existed record.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def update(self, id: JobID, job: Job):  # pylint: disable=invalid-name, redefined-builtin
-        """
-        Update existed record.
+        Get an aggregate by key.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, id: JobID):  # pylint: disable=invalid-name, redefined-builtin
+    def delete(self, key: AggregateKey):
         """
-        Delete existed record.
+        Delete an aggregate by key.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def add(self, key: AggregateKey, message: Message):
+        """
+        Add a new message to aggregate by key.
         """
         raise NotImplementedError

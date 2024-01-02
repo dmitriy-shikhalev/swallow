@@ -8,15 +8,15 @@ class AbstractQueue(ABC):
     Abstract class for Queue.
     """
     @abstractmethod
-    def pull(self) -> Message | None:
+    def pop(self) -> Message | None:
         """
-        Abstract method "pull".
+        Abstract method "pop".
         """
         raise NotImplementedError
 
     @abstractmethod
-    def push(self, message: Message) -> None:
+    def append(self, message: Message) -> None:
         """
-        Abstract method "push".
+        Abstract method "append".
         """
         raise NotImplementedError

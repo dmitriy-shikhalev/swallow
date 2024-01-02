@@ -1,55 +1,13 @@
+from __future__ import annotations
+
+import json
 import logging
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, NewType, Sequence
+from dataclasses import asdict, dataclass, field
+
+from .file import AbstractFile
 
 
 logger = logging.getLogger(__name__)
-
-
-JobID = NewType('JobID', str)
-OperatorName = NewType('OperatorName', str)
-RequestID = NewType('RequestID', str)
-TicketID = NewType('TicketID', str)
-
-
-class JobStatus(Enum):
-    """
-    All available statuses of Job.
-    """
-    PENDING = 'PENDING'
-    PROCESSING = 'PROCESSING'
-    DONE = 'DONE'
-    ERROR = 'ERROR'
-
-
-class Condition(Enum):
-    """
-    Condition of starting of operator by count of enter messages.
-    """
-    ONE = 'ONE'
-    ALL = 'ALL'
-
-
-@dataclass(frozen=True)
-class Object:
-    """
-    Class that implements Args of operator launch.
-    """
-    args: Sequence[Any] = field(default_factory=list)
-    kwargs: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class Request:
-    """
-    Class for request.
-    """
-    id: RequestID  # pylint: disable=invalid-name
-    operator_name: OperatorName
-    input: Object
-    output: Object
-    exit_code: int | None = None
 
 
 @dataclass(frozen=True)
@@ -57,8 +15,16 @@ class Unit:
     """
     Object-value for "unit".
     """
-    operator_name: OperatorName
-    condition: Condition
+    name: str
+    tags: set[str] = field(default_factory=set)
+
+
+@dataclass(frozen=True)
+class Sequence:
+    """
+    Object-value for "sequence of units".
+    """
+    element = tuple[Unit | dict[frozenset, 'Sequence'], ...]
 
 
 @dataclass(frozen=True)
@@ -66,9 +32,7 @@ class Ticket:
     """
     Object-value for "ticket".
     """
-    units: Sequence[
-        Unit | Sequence[Unit]
-    ]
+    sequence: Sequence
 
 
 @dataclass(frozen=True)
@@ -76,22 +40,26 @@ class Message:
     """
     Object-value for "message".
     """
-    id: JobID  # pylint: disable=invalid-name
-    object: Object
+    job_id: str
+    object: str
     ticket: Ticket
 
-    # Block for splitter-aggregator
-    num: int | None
-    is_last: bool | None
+    @classmethod
+    def from_file(cls, file: AbstractFile) -> Message:
+        """
+        Convert file content to message.
+        """
+        return cls(
+            **json.loads(
+                file.read()
+            )
+        )
+
+    def to_json(self):
+        """
+        Represent message as json.
+        """
+        return json.dumps(asdict(self))
 
 
-@dataclass(frozen=True)
-class Job:
-    """
-    Class for Job.
-    """
-    id: JobID  # pylint: disable=invalid-name
-    ticket: Ticket
-    inputs: Object
-    outputs: Object | None
-    status: JobStatus = JobStatus.PENDING
+AggregateKey = tuple[str, str, str]

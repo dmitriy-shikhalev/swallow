@@ -1,19 +1,24 @@
 import atexit
+import logging
 import time
 from argparse import ArgumentParser, Namespace
 
-from .domain.exceptions import UnknownExecutor, UnknownQueue, UnknownMonitor, UnknownRepository
-from .domain.executor import AbstractExecutor
 from .domain.queue import AbstractQueue
-from .domain.monitor import AbstractMonitor
 from .domain.repository import AbstractRepository
-from .local.executor import LocalExecutor
-from .local.queue import InMemoryQueue
-from .local.monitor import LocalFolderMonitor
-from .local.repository import SqliteRepository
+from .domain.services import execute, generator
+from .local.queue import LocalFolderQueue
+
+
+logger = logging.getLogger(__name__)
 
 
 SLEEP_TIME = 0.5
+
+
+class UnknownArgumentValue(Exception):
+    """
+    Exception for unknown argument value.
+    """
 
 
 def get_settings() -> Namespace:
@@ -22,42 +27,24 @@ def get_settings() -> Namespace:
     """
     parser = ArgumentParser()
     parser.add_argument("name")
-    parser.add_argument("folder")
-    parser.add_argument("--executor", dest='executor', required=True)
+    parser.add_argument("dirname")
     parser.add_argument("--queue", dest='queue', required=True)
-    parser.add_argument("--repository", dest='repository', required=True)
-    parser.add_argument("--monitor", dest='monitor', required=True)
 
     return parser.parse_args()
 
 
-def bootstrap() -> tuple[AbstractRepository, AbstractQueue, AbstractExecutor, AbstractMonitor]:
+def bootstrap() -> tuple[AbstractRepository, AbstractQueue]:
     """
     Startup initialization function.
     """
     settings = get_settings()
 
-    if settings.repository == 'SqliteRepository':
-        repository = SqliteRepository(settings.name)
+    if settings.queue == 'LocalFolderQueue':
+        queue = LocalFolderQueue(settings.indir)
     else:
-        raise UnknownRepository(settings.repository)
+        raise UnknownArgumentValue(settings.monitor)
 
-    if settings.queue == 'InMemoryQueue':
-        queue = InMemoryQueue()
-    else:
-        raise UnknownQueue(settings.repository)
-
-    if settings.executor == 'LocalExecutor':
-        executor = LocalExecutor()
-    else:
-        raise UnknownExecutor(settings.executor)
-
-    if settings.monitor == 'LocalFolderMonitor':
-        monitor = LocalFolderMonitor(settings.folder)
-    else:
-        raise UnknownMonitor(settings.monitor)
-
-    return repository, queue, executor, monitor
+    return queue
 
 
 def shutdown():
@@ -66,32 +53,22 @@ def shutdown():
     """
 
 
-def serve(repository: AbstractRepository, queue: AbstractQueue, executor: AbstractExecutor, monitor: AbstractMonitor):
+def serve(queue: AbstractQueue):
     """
     Infinite loop.
     """
-    while True:
-        any_load = False
+    queue_generator = generator(queue)
 
-        new_file = monitor.get()
-        if new_file is not None:
-            any_load = True
-            raise NotImplementedError
-
-        message = queue.pull()
-        if message is not None:
-            any_load = True
-            raise NotImplementedError
-
-        if not any_load:
-            time.sleep(SLEEP_TIME)
+    for message in queue_generator:
+        logger.info('Get new messsage: %s', message)
+        execute(message)
 
 
 def main():
     """
     Main process.
     """
-    repository, queue, executor, monitor = bootstrap()
+    repository, queue = bootstrap()
     atexit.register(shutdown)
 
-    serve(repository, queue, executor, monitor)
+    serve(repository, queue)
