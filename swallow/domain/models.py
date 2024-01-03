@@ -63,3 +63,12 @@ class Message:
 
 
 AggregateKey = tuple[str, str, str]
+
+
+@dataclass(frozen=False)
+class Aggregate:
+    """
+    Data class for aggregate.
+    """
+    key: AggregateKey
+    messages: list[Message]

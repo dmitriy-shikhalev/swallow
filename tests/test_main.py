@@ -1,2 +1,2 @@
-def test_serve():
+def test_main():
     raise NotImplementedError

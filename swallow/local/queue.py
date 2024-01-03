@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 from ..domain.queue import AbstractQueue
 from ..domain.models import Message
@@ -19,16 +20,17 @@ class LocalFolderQueue(AbstractQueue):  # pylint: disable=too-few-public-methods
         for filename in os.listdir(self.dirname):
             path = self.dirname / filename
 
-            message = Message.from_file(
-                LocalFile(path)
-            )
+            local_file = LocalFile(path=path)
+
+            message = Message.from_file(local_file)
+            local_file.delete()
             return message
         return None
 
     def append(self, message: Message):
-        filename = str(message.id)
+        filename = uuid4().hex
         timestamp = datetime.now().isoformat()
         filename = f'{timestamp}-{filename}.json'
+        local_file = LocalFile(Path(filename))
 
-        with open(self.dirname / filename, 'wb') as fd:  # pylint: disable=invalid-name
-            fd.write(message.to_json())
+        local_file.write(message.to_json())

@@ -3,8 +3,10 @@ from dataclasses import replace  # pylint: disable=unused-import
 from random import shuffle
 from typing import Generator
 
-from .models import Message
 from .queue import AbstractQueue
+from .models import Message
+from .repository import AbstractRepository
+
 
 
 logger = logging.getLogger(__name__)
@@ -29,3 +31,14 @@ def generator(*queues: AbstractQueue) -> Generator[Message, None, None]:
 
             if message:
                 yield message
+
+
+def serve(queue: AbstractQueue, repository: AbstractRepository) -> None:
+    """
+    Infinite loop.
+    """
+    queue_generator = generator(queue)
+
+    for message in queue_generator:
+        logger.info('Get new message: %s', message)
+        execute(message)
