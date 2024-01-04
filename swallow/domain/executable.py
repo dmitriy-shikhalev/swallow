@@ -6,7 +6,12 @@ class Operator(ABC):
     """
     Abstract operator.
     """
-    raise NotImplementedError
+    @abstractmethod
+    def execute(self):
+        """
+        Execute operator.
+        """
+        raise NotImplementedError
 
 
 class Aggregator(ABC):
@@ -14,4 +19,9 @@ class Aggregator(ABC):
     """
     Abstract aggregator.
     """
-    raise NotImplementedError
+    @abstractmethod
+    def execute(self):
+        """
+        Add value to aggregator.
+        """
+        raise NotImplementedError
