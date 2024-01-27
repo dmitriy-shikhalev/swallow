@@ -7,9 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pika = "^1.3.2"
 pydantic = "^2.3.0"
 pyyaml = "^6.0.1"
+sqlalchemy = {extras = ["mypy"], version = "^2.0.25"}
+alembic = "^1.13.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -21,10 +22,11 @@ freezegun = "^1.2.2"
 pika-stubs = "^0.1.3"
 types-pyyaml = "^6.0.12.12"
 pylint = "<3.0.0"
+#pylint = "2.13.5"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-yarrow = "yarrow.main:main"
+swallow = "swallow.main:main"

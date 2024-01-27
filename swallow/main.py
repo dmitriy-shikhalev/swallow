@@ -1,24 +1,22 @@
-import atexit
 import logging
+import time
 
-from .bootstrap import bootstrap
-from .domain.services import serve
+from .job import Job
 
 
 logger = logging.getLogger(__name__)
 
 
-def shutdown():
-    """
-    Final everything at the end of process.
-    """
+SLEEP_TIME = 5
 
 
-def main():
+def main(job_path):
     """
     Main process.
     """
-    queue, repository = bootstrap()
-    atexit.register(shutdown)
+    job = Job(job_path)
 
-    serve(queue, repository)
+    while not job.is_finished:
+        job.beat()
+
+    logger.info('Job is finished with status %s', job.status)

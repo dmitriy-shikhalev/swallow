@@ -1,57 +1,35 @@
-# Analog of Celery. But with separate queue for every operator and with pydantic verification of input and output.
+# Сценарии использования:
+## 1. Пользователь запускает терминальную команду где указывает имя файла с тикетом, имена входных файлов, в ответ получает ИД джобы:
+- `python swallow-create --work-dir=/tmp/swallow --operators=./test/data/operators.py --ticket=blabla.yaml --input a=input1.json b=input2.jpeg`
+- `107798ac-20c0-43fd-8b7b-b99f098a1706`
+## 2. Пользователь хочет узнать статус своей джобы:
+- `python swallow-status --work-dir=/tmp/swallow 107798ac-20c0-43fd-8b7b-b99f098a1706`
+- `DONE`
+## 3. Пользователь хочет получить результаты джобы:
+- `python swallow-results --work-dir=/tmp/swallow 107798ac-20c0-43fd-8b7b-b99f098a1706`
+- {'some variable': '/tmp/234234-temp-file'}
+## 4. Пользователь хочет получить список джоб:
+- `python swallow-jobs --work-dir=/tmp/swallow [--status=DONE]`
+- [{'id': 107798ac-20c0-43fd-8b7b-b99f098a1706, 'status': 'DONE'}]
+### Содержание файлов:
+1. input1.json:
+   - `{"a": "b"}`
+2. input2.jpeg
+   - *[Бинарный файл]*
+3. blabla.yaml
+   - ```yaml
+     afdkjh
+     ???
+     ```
 
-# Usage example
-## Create new process:
-    1. Create new python file.
-    2. Create new class with parent class yarrow.operator.Operator:
-       - defile field input (from pydantic.BaseModel)
-       - define field output (from pydantic.BaseModel)
-       - write method "run"
-    3. Define envs:
-       - HOST  # of rabbitmq
-       - PORT  # of rabbitmq
-       - VIRTUAL_HOST  # of rabbitmq
-       - USERNAME  # of rabbitmq
-       - PASSWORD  # of rabbitmq
-       - CONFIG_FILENAME  # file with operators names
-    4. Install `yarrow`
-       - pip install git+https://github.com/dmitriy-shikhalev/yarrow
-    5. Run `yarrow` command.
-
-## Put new message to queue with name of your operator with
-- body - is json with args, e.g. `{"a": 123, "b": "some string"}`
-- reply_to - name of queue for answer of yarrow
-- correlation_id - id of your new message
-
-# Run unittests
-- `pytest tests/`
-
-# Answer statuses:
-- If there is no reply_to property in message, then answer with status ERROR will send to queue __dead_letters_queue__.
-- If there is ok: answer will send to queue reply_to with the same correlation_id and status DONE.
-- If there is error: answer will send to queue reply_to with the same correlation_id and status ERROR.
-
-# Model of answer:
-- [correlation_id in properties]
-- request - origin request object
-- result - result of execute operator
-- error - string of error text
-- status - one of DONE, PROCESSING, ERROR. If the message in sequence is last, then status is DONE, PROCESSING otherwise.
-- num - number of answer (if one answer - there is should "0" every time)
-
-# Stream as answer
-- When there is several messages in answer then every message will have it's num, and will have status "PROCESSING".
-After this messages there will be message with status "DONE", num is the max value of this sequence and null at field
-result.
-
-# Examples of usage in folder "example".
-
-# All operator.run function should be a generator, e.g. you need to use yield, not return.
-Client will get 2 message: one with result and status "PROCESSING", and second with null
-result and status "DONE".
-
-# Launch integration tests
-- `docker-compose up --build integration-tests`
-
-# Get list of all operators and its input/output
-- Send message to queue `__info__`
+# Архитектура
+## Выполнение следующего шага начинается только после окончания предыдущего шага.
+## Степ выполняется в контексте одной джобы.
+## Джоба состоит из входов, выходов и степов, которые содержат в себе оператор и признак применения
+- EVERY - следующий шаг применяется к каждому выходу предыдущего шага
+- ALL - следующий шаг применяется ко всем выходам предыдущего сразу
+- ONE - следующий шаг применяется к первому выходу предыдущего шага.
+## Из шага может быть один или несколько выходов.
+- В случае если вернулся словарь, то это один выход.
+- В случае если вернулся массив, то это несколько выходов. 
+## Каждый выход - это словарь, ключи которого это строки. А значения которого - это имена файлов. Даже значение 1:int нужно класть в файл: json.dump(open("some_file.json", 'w'), 1). Сериализация это ответственность swallow. В функцию и из функции входит и выходит просто питон-значение (int(1) в данном случае).

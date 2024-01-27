@@ -1,2 +1,5 @@
+from swallow.main import main
+
+
 def test_main():
-    raise NotImplementedError
+    main('tests/data/test_job')
