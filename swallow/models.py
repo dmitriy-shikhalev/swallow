@@ -8,19 +8,45 @@ from .enums import Resistor, Status
 
 
 @dataclass
-class Step:
+class Input:
+    id: int = field(init=False)
+    name: str = field(init=False)
+    type: str = field(init=False)
+    resistor: Resistor = field(init=False)
+
+
+@dataclass
+class Output:
+    id: int = field(init=False)
+    name: str = field(init=False)
+    type: str = field(init=False)
+
+
+@dataclass
+class Operator:
+    """
+    Abstract operator.
+    """
+    id: int = field(init=False)
+    name: str = field(init=False)
+    input: list[Input] = field(default_factory=dict)
+    output: list[Output] = field(default_factory=dict)
+
+
+@dataclass
+class Unit:
     id: int = field(init=False)
     ticket_id: int = field(init=False)
-    operator: str = field(init=False)
-    resistor: Resistor = field(init=False)
+    name: str = field(init=False)
+    operator: Operator = field(init=False)
 
 
 @dataclass
 class Ticket:
     id: int = field(init=False)
-    input: Dict[str] = field(default_factory=dict)
-    output: Dict[str] = field(default_factory=dict)
-    steps: List[Step] = field(default_factory=list)
+    input: Dict[str, str] = field(default_factory=dict)
+    output: Dict[str, str] = field(default_factory=dict)
+    units: List[Unit] = field(default_factory=list)
     jobs: List[Job] = field(default_factory=list)
 
 
@@ -28,8 +54,9 @@ class Ticket:
 class Request:
     id: int = field(init=False)
     job_id: int = field(init=False)
-    step_id: int = field(init=False)
+    unit_id: int = field(init=False)
     request_id: Optional[str] = field(init=False, default=None)
+    grid: str = field(init=False)  # Для контроля по каким инпутам (файлам) запущен данный юнит.
     status: Status = field(init=False)
 
 
@@ -37,5 +64,5 @@ class Request:
 class Job:
     id: int = field(init=False)
     ticket_id: int = field(init=False)
-    step_id: Optional[int] = field(init=False, default=None)
+    unit_id: Optional[int] = field(init=False, default=None)
     status: Status = field(init=False)

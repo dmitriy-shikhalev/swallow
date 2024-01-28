@@ -1,0 +1,3 @@
+OPERATORS = {
+    'a': 'celery.b'
+}
