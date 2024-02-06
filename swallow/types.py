@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from io import IOBase
 from typing import Any
 
 
@@ -7,12 +8,15 @@ from typing import Any
 class Int:
     value: int
 
-    def encode(self):
-        return json.dumps(self.value)
+    def write(self, stream: IOBase) -> None:
+        stream.write(
+            json.dumps(self.value)
+        )
 
     @classmethod
-    def decode(cls, value):
-        return cls(json.loads(value))
+    def decode(cls, stream: IOBase) -> 'Int':
+        data = stream.read()
+        return cls(json.loads(data.decode("utf")))
 
 
 @dataclass(frozen=True)
@@ -40,7 +44,7 @@ class Str:
 
 
 @dataclass(frozen=True)
-class Json:
+class Dict:
     value: dict[Any, Any]
 
     def encode(self):

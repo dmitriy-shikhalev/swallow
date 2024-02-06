@@ -1,5 +1,7 @@
 from enum import Enum
 
+from .types import Int, Float, Str, List, Dict
+
 
 class Status(Enum):
     """
@@ -25,3 +27,8 @@ class Type(Enum):
     """
     Enumeration of types of fields.
     """
+    Int = Int
+    Float = Float
+    List = List
+    Str = Str
+    Dict = Dict
